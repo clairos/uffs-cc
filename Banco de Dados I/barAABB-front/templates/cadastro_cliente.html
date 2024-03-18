@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>barAABB</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">barAABB</a>
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="clientesDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Clientes
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="clientesDropdown">
+                        <a class="dropdown-item" href="cadastro_cliente.html">Cadastrar</a>
+                        <a class="dropdown-item" href="consulta_clientes.html">Consultar</a>
+                        <a class="dropdown-item" href="#">Registrar fiado</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="cadastrarDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Cadastrar
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="cadastrarDropdown">
+                        <a class="dropdown-item" href="consulta_produtos.html">Produtos</a>
+                        <a class="dropdown-item" href="consulta_categoria.html">Categorias</a>
+                        <a class="dropdown-item" href="cadastro_usuario.html">Usuários</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="estoqueDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Estoque
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="estoqueDropdown">
+                        <a href="" class="dropdown-item" href="#">Consulta</a>
+                        <a href="" class="dropdown-item" href="#">Lista de compras</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="venda_diaria.html">Vendas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="sobre.html">Sobre</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="login.html">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="criar_conta.html">Criar conta</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="cadastrocliente-container shadow rounded p-4 mx-auto">
+            <form>
+                <div class="form-group hidden-element">
+                    <label for="inputCodigo">Codigo:</label>
+                    <input type="text" class="form-control" id="inputCodigo" 
+                        aria-describedby="emailHelp"
+                        disabled="true">
+                </div>
+                <div class="form-group">
+                    <label for="inputNome">Nome completo:</label>
+                    <input type="text" class="form-control" id="inputNome" aria-describedby="emailHelp"
+                        placeholder="e.g.: João da Silva">
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail">Endereço de email:</label>
+                    <input type="email" class="form-control" id="inputEmail" aria-describedby="emailHelp"
+                        placeholder="e.g.: joaosilva@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="inputTel">Telefone/Celular:</label>
+                    <input type="tel" class="form-control" id="inputTel" placeholder="e.g.: (XX)XXXXX-XXXX">
+                </div>
+                <div class="form-group">
+                    <label for="inputObs">Observações:</label>
+                    <textarea class="form-control" id="inputObs" rows="3"></textarea>
+                </div>
+                <div class="container button-container">
+                    <button type="button" class="btn btn-secondary btn-block text-white"
+                        onclick="window.location.href='consulta_clientes.html'">Cancelar</button>
+                    <button type="button" class="btn btn-warning btn-block text-white"
+                        onclick="cadastrar()">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer mt-5">
+        <div class="container">
+            <p class="mb-0 text-center">
+                &copy; 2023 barAABB. Todos os direitos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="cliente.controller.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Obter o ID do cliente da barra de endereço do URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const idCliente = urlParams.get('idCliente');
+
+            if (idCliente) {
+                popularFormularioParaEditar(idCliente);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

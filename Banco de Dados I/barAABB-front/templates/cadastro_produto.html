@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>barAABB</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">barAABB</a>
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="clientesDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Clientes
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="clientesDropdown">
+                        <a class="dropdown-item" href="cadastro_cliente.html">Cadastrar</a>
+                        <a class="dropdown-item" href="consulta_clientes.html">Consultar</a>
+                        <a class="dropdown-item" href="#">Registrar fiado</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="cadastrarDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Cadastrar
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="cadastrarDropdown">
+                        <a class="dropdown-item" href="consulta_produtos.html">Produtos</a>
+                        <a class="dropdown-item" href="consulta_categoria.html">Categorias</a>
+                        <a class="dropdown-item" href="cadastro_usuario.html">Usuários</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="estoqueDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Estoque
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="estoqueDropdown">
+                        <a href="" class="dropdown-item" href="#">Consulta</a>
+                        <a href="" class="dropdown-item" href="#">Lista de compras</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="venda_diaria.html">Vendas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="sobre.html">Sobre</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="login.html">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="criar_conta.html">Criar conta</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="produto-container shadow rounded p-4 mx-auto">
+            <form>
+                <h2 class="text-center">Cadastro de Produto</h2>
+
+                <div class="form-group flex-fill">
+                    <label for="inputCodigo">Codigo:</label>
+                    <input type="text" class="form-control" id="inputCodigo" disabled="true">
+                </div>
+
+                <div class="form-group flex-fill">
+                    <label for="inputNomeProduto">Descricao do produto:</label>
+                    <input type="text" class="form-control" id="inputNomeProduto">
+                </div>
+
+                <div class="form-group">
+                    <label for="categoriaproduto">Categoria:</label>
+                    <select class="form-control" id="categoriaproduto" onchange="setarCategoria('categoriaproduto')">
+                        <option>Selecione uma opcao</option>
+                    </select>
+                </div>
+
+                <div class="d-flex f3">
+                    <div class="flex-fill form-group">
+                        <label for="inputValCompra">Preço Compra:</label>
+                        <input type="number" class="form-control" id="inputValCompra">
+                    </div>
+
+                    <div class="flex-fill form-group">
+                        <label for="inputValVenda">Preço Venda:</label>
+                        <input type="number" class="form-control" id="inputValVenda">
+                    </div>
+
+                    <div class="flex-fill form-group">
+                        <label for="inputQtd">Quantidade disponível:</label>
+                        <input type="number" class="form-control" id="inputQtd">
+                    </div>
+                    
+                </div>
+                <div class="form-group">
+                    <label for="usuario">Usuario:</label>
+                    <select class="form-control" id="usuario" onchange="setarUsuario('usuario')">
+                        <option>Selecione uma opcao</option>
+                    </select>
+                </div>
+                <div class="container button-container">
+                    <button type="button" class="btn btn-secondary btn-block text-white"
+                        onclick="window.location.href='consulta_produtos.html'">Cancelar</button>
+                    <button type="button" class="btn btn-warning btn-block text-white"
+                        onclick="cadastrar()">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer mt-5">
+        <div class="container">
+            <p class="mb-0 text-center">
+                &copy; 2023 barAABB. Todos os direitos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="produto.controller.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idProduto = urlParams.get('idProduto');
+
+            setUpDados();
+
+            if (idProduto) {
+                popularFormularioParaEditar(idProduto);
+            }
+        });
+    </script>
+</body>
+
+</html>
