@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>coin</string>
+        </entry>
+      </elementAttributes>
+      <pos x="-360" y="520"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes/>
+      <pos x="80" y="440"/>
+    </visualElement>
+    <visualElement>
+      <elementName>ExternalFile</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>SodaMachine</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>clk,reset,coin</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>12</int>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>dispense_out</string>
+        </entry>
+        <entry>
+          <string>CodeFile</string>
+          <file>C:\Users\richa\OneDrive\Área de Trabalho\vhdl\Elevador.vhd</file>
+        </entry>
+      </elementAttributes>
+      <pos x="-260" y="420"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Button</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>reset</string>
+        </entry>
+      </elementAttributes>
+      <pos x="-420" y="440"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Button</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>clock</string>
+        </entry>
+      </elementAttributes>
+      <pos x="-360" y="360"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="-340" y="420"/>
+      <p2 x="-260" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="-20" y="440"/>
+      <p2 x="80" y="440"/>
+    </wire>
+    <wire>
+      <p1 x="-420" y="440"/>
+      <p2 x="-260" y="440"/>
+    </wire>
+    <wire>
+      <p1 x="-360" y="360"/>
+      <p2 x="-340" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="-360" y="520"/>
+      <p2 x="-340" y="520"/>
+    </wire>
+    <wire>
+      <p1 x="-340" y="460"/>
+      <p2 x="-260" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="-340" y="360"/>
+      <p2 x="-340" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="-340" y="460"/>
+      <p2 x="-340" y="520"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
