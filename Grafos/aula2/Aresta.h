@@ -4,7 +4,7 @@
 
 class Aresta {
     public:
-        Aresta(int v1, int v2);
+        Aresta(int v1, int v2); // vertices da aresta
         
         const int v1;
         const int v2;        
