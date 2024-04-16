@@ -82,6 +82,6 @@ ALTER DATABASE mydb OWNER TO clara1;
 #### 10. Criando uma trigger que armazene em uma tabela de auditoria todas as vezes que a quantidade vendida de um produto for alterada
 > A tabela de auditoria deverá ter a operação, o valor antigo e novo (se for o caso), data e hora da operação e usuário. Esta tabela não tem PK
 
-#### 11. Criando um índice não único para a data da venda e ,neste índice, incluindo o endereço.
+#### 11. Criando um índice não único para a data da venda e, neste índice, incluindo o endereço.
 
 #### 12. Para o usuário não dono do BD, dando alguns privilégios: select em product e sale, todos para sale_item.
