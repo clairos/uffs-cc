@@ -1,9 +1,8 @@
-from re import findall as find #biblioteca de expressões regulares
+from re import findall as find
 
 
 def unirEstados(automato, estados):
-    # É feita a união de todos os estados do automato que estão na lista estados
-    final = {} #simbolos e os estados acessíveis a partir dele, é atualizado a cada passagem pela função 
+    final = {}
     def unir(estado):
         for e in estado:
             if e in final:
@@ -11,7 +10,7 @@ def unirEstados(automato, estados):
             else:
                 final.update({e: estado[e]})
 
-    for estado in estados: # percorre os estados que precisam ser unidos, e adiciona as transições de cada simbolo para o dicionario final
+    for estado in estados:
         unir(automato[estado])
     return final
 
@@ -21,25 +20,25 @@ def unirListas(l1, l2):
 
 
 def unirAutomatos(afd, afndTemp):
-    mapaNovosEstados = {x: x + len(afd) for x in range(len(afndTemp))} # cria um dicionário, com as novas posições na afnd principal das regras do afnd
+    mapaNovosEstados = {x: x + len(afd) for x in range(len(afndTemp))}
     aux = []
 
-    if '&' in afd[0].keys():     # É criado uma nova regra S' que leva a regra S por epsilon transição
+    if '&' in afd[0].keys():
         afd[0]['&'].append(mapaNovosEstados[0])
     else:
         afd[0].update({'&': [mapaNovosEstados[0]]})
     
-    for chave in afndTemp.keys(): #percorre os estados do afnd temporario
-        for ch in afndTemp[chave].keys(): #percorre os simbolos/transições dos estados
-            if ch == '*': # se for terminal, continua o loop
+    for chave in afndTemp.keys():
+        for ch in afndTemp[chave].keys():
+            if ch == '*':
                 continue
-            aux = [] #lista auxiliar com os novos estados da afnd temporario
-            for i in afndTemp[chave][ch]: # percorre os estados atingiveis pelo simbolo
-                aux.append(mapaNovosEstados[i]) 
-            afndTemp[chave][ch] = aux #atualiza os estados atingiveis da afnd temporaria, para os novos estados que serão criados na afnd principal
+            aux = []
+            for i in afndTemp[chave][ch]:
+                aux.append(mapaNovosEstados[i])
+            afndTemp[chave][ch] = aux
     
     for chave in afndTemp.keys():
-        afd.update({mapaNovosEstados[chave] : afndTemp[chave]}) #cria os novos estados na afnd principal
+        afd.update({mapaNovosEstados[chave] : afndTemp[chave]})
 
 
 def exibirAutomatoDeterministico(afnd, alfabeto):
@@ -66,144 +65,145 @@ def exibirAutomatoDeterministico(afnd, alfabeto):
 
 def gerarAfndToken(afnd, token, alfabeto):
     if not afnd:
-        afnd.update({len(afnd): {}}) #gera o afnd com o index == (tamanho atual da afnd = 0, 1, 2, 3 -- Criando assim as regras), transição 0 é a inicial
+        afnd.update({len(afnd): {}})
     
-    tokenInicial = True #primeiro caracter inicial, o que vai guiar para as próximas regras
+    tokenInicial = True
     
-    for tk in token: # percorre a string do token 
-        if tk not in alfabeto: # se o caracter ainda não estiver no alfabeto aceito
-            alfabeto.append(tk) # adiciona no alfabeto da linguagem
+    for tk in token:
+        if tk not in alfabeto:
+            alfabeto.append(tk)
         
-        if tokenInicial:   # Token inicial vai para o primeiro estado do automato
-            mapeado = afnd[0] # 'ponteiro' para o estado inicial
+        if tokenInicial:
+            mapeado = afnd[0]
 
             if tk in mapeado.keys():
-                mapeado[tk].append(len(afnd)) #caso já exista uma regra com esse simbolo, adiciona uma transição para um novo estado para essa regra
+                mapeado[tk].append(len(afnd))
             else:
                 mapeado.update({tk : [len(afnd)]})
             tokenInicial = False
         else:
-            afnd.update({len(afnd) : {tk: [len(afnd) + 1]}}) # cria um novo estado, que irá levar para o próximo a partir do simbolo
+            afnd.update({len(afnd) : {tk: [len(afnd) + 1]}})
     
-    afnd.update({len(afnd) : {'*': [1]}}) # quando chega ao final do token, o novo estado criado é final
+    afnd.update({len(afnd) : {'*': [1]}})
+
 
 def gerarAfndGramatica(afnd, gramatica, alfabeto):
-    if not afnd: #se não tiver palavras reservadas, cria o afnd
+    if not afnd:
         afnd.update({0: {}})
     
     afndTemporario = {}
     mapaRegras = {}
     
-    for regra in gramatica: #percorre as produções da gramática
-        simbolos = find(r'(\w*<\w+>|\w+|&)', regra) # quebra em regra e suas produções
+    for regra in gramatica:
+        simbolos = find(r'(\w*<\w+>|\w+|&)', regra)
         
-        if simbolos[0] in mapaRegras.keys():     # Verifica se a regra já foi criada
-            indiceRegra = mapaRegras[simbolos[0]] 
+        if simbolos[0] in mapaRegras.keys():
+            indiceRegra = mapaRegras[simbolos[0]]
         else:
-            indiceRegra = len(afndTemporario) #indice da regra
-            afndTemporario.update({indiceRegra : {}}) #cria um novo estado do automato temporario
-            mapaRegras.update({simbolos[0]: indiceRegra}) #mapeia a regra, relacionando-a com o indice do novo estado criado no automato
+            indiceRegra = len(afndTemporario)
+            afndTemporario.update({indiceRegra : {}})
+            mapaRegras.update({simbolos[0]: indiceRegra})
 
-        for simbolo in simbolos[1:]: #percorre as produções da regra
-            terminal = find(r'^\w+', simbolo) 
-            naoTerminal = find(r'<\w+>', simbolo) 
-            terminal = '&' if not terminal else terminal[0] #caso nao ache simbolo terminal, cria um epsilon transição
+        for simbolo in simbolos[1:]:
+            terminal = find(r'^\w+', simbolo)
+            naoTerminal = find(r'<\w+>', simbolo)
+            terminal = '&' if not terminal else terminal[0]
 
-            if terminal not in alfabeto: #caso o caracter nao esteja no alfabeto
-                alfabeto.append(terminal) #adiciona ao alfabeto da gramática
+            if terminal not in alfabeto:
+                alfabeto.append(terminal)
 
-            if not naoTerminal:       # produção sem não terminal, gera uma regra que tem transição para um estado terminal
-                rg = afndTemporario[indiceRegra] #ponteiro para o estado correspondente a regra sendo lida
+            if not naoTerminal:
+                rg = afndTemporario[indiceRegra]
 
-                if terminal in rg.keys(): #se ja existir esse terminal no estado
-                    rg[terminal].append(len(afndTemporario)) #acrescenta nova transição no simbolo
+                if terminal in rg.keys():
+                    rg[terminal].append(len(afndTemporario))
                 else:
-                    rg.update({terminal : [len(afndTemporario)]}) #cria um novo simbolo no estado
+                    rg.update({terminal : [len(afndTemporario)]})
 
-                afndTemporario.update({len(afndTemporario): {'*':[1]}}) #cria um novo estado/regra terminal
+                afndTemporario.update({len(afndTemporario): {'*':[1]}})
             else:
                 naoTerminal = naoTerminal[0]
 
-                if naoTerminal in mapaRegras.keys(): #caso a regra ja tenha sido mapeada
-                    rg = mapaRegras[naoTerminal] #armazena o indice do estado do automato correspondente a regra lida
-                else: # se nao estiver mapeada, cria um novo estado no automato
-                    rg = len(afndTemporario) #indice do novo estado
-                    mapaRegras.update({naoTerminal: rg}) #mapeia a regra, relacionando-a com o indice do novo estado criado no automato
-                    afndTemporario.update({rg: {}}) #cria um novo estado do automato temporario
-                
-                mp = afndTemporario[indiceRegra] #ponteiro para o estado do automato corresponde a regra sendo lida
-                
-                if terminal in mp.keys(): #caso o simbolo ja esteja no estado do automato
-                    mp[terminal].append(rg) #cria a transição para o estado do referente ao nao terminal
+                if naoTerminal in mapaRegras.keys():
+                    rg = mapaRegras[naoTerminal]
                 else:
-                    mp.update({terminal: [rg]}) #acrescenta mais uma transição para o simbolo ja existente
+                    rg = len(afndTemporario)
+                    mapaRegras.update({naoTerminal: rg})
+                    afndTemporario.update({rg: {}})
+                
+                mp = afndTemporario[indiceRegra]
+                
+                if terminal in mp.keys():
+                    mp[terminal].append(rg)
+                else:
+                    mp.update({terminal: [rg]})
 
     unirAutomatos(afnd, afndTemporario)
 
 def eliminarEpsilonTransicoes(afnd):
     epsilon = []
 
-    for chave in afnd.keys(): #mapeia os estados que possuem epsilon transição
+    for chave in afnd.keys():
         if '&' in afnd[chave]:
             epsilon.append(chave)
 
-    def copiarRegras(regras, nRegra):  # Recursivamente copia regras que são acessadas por uma epsilon transição
+    def copiarRegras(regras, nRegra):
         if nRegra not in epsilon:
-            return  # Caso não tenha epsilon transições na regra
+            return
         
-        epsilon.remove(nRegra) 
+        epsilon.remove(nRegra)
         
-        for regra in regras['&']: #percorre os estados que são acessíveis por epsilon transição
-            chaves = afnd[regra].keys() #salva os simbolos dos estados atingidos por epsilon transição
+        for regra in regras['&']:
+            chaves = afnd[regra].keys()
             
-            if '&' in chaves: #caso os estados atingidos tenham epsilon transição, remove recursivamente
+            if '&' in chaves:
                 copiarRegras(afnd[regra], regra)
                 regras['&'] = unirListas(regras['&'], afnd[regra]['&'])
         
-        # une as transições de cada simbolo dos estados atingidos por epsilon transição, com as regras do estado que tem epsilon transição
         afnd[nRegra] = unirEstados(afnd, regras['&'] + [nRegra]) 
 
     epAux = epsilon.copy()
     
     for ep in epAux:
-        copiarRegras(afnd[ep], ep) #copia as regras dos estados atingidos por epsilon transição, para o estado que tinha epsilon transição
+        copiarRegras(afnd[ep], ep)
     
     for ep in epAux:
-        del afnd[ep]['&'] #apaga as regras dos estados que tenham epsilon transição
+        del afnd[ep]['&']
 
 
 def determinizar(afnd):
     mpRgs = {}
     visitados = set()
 
-    def determiniza(regra, nReg):  # Recursivamente determiniza o automato
+    def determiniza(regra, nReg):
         if nReg in visitados: 
             return
         visitados.add(nReg) 
         chaves = list(regra.keys()) 
 
         for chave in chaves:
-            if len(regra[chave]) > 1: #se a regra tiver mais que uma transição
+            if len(regra[chave]) > 1:
                 regra[chave].sort()
-                nRg = str(regra[chave])  # É gerada uma nova regra que será mapeada no mpReg
+                nRg = str(regra[chave])
                 
                 if nRg not in mpRgs.keys(): 
-                    nEst = len(afnd)  # Novo estado que será mapeado pela variavel nRg
+                    nEst = len(afnd)
                     mpRgs.update({nRg: nEst})
                     afnd.update({len(afnd): unirEstados(afnd, regra[chave])})
-                    determiniza(afnd[nEst], nEst) # determiniza os novos estados criados
+                    determiniza(afnd[nEst], nEst)
                 
-                regra.update({chave: [mpRgs[nRg]]}) # atualiza a regra que tinha mais que uma transição, para o novo estado criado
+                regra.update({chave: [mpRgs[nRg]]})
 
     i, t = 0, len(afnd)
     while i < t:
         determiniza(afnd[i], i)
-        i, t = i + 1, len(afnd)  # Cada nova regra criada também deve ser determinizada
+        i, t = i + 1, len(afnd)
+
 
 def eliminarInalcancaveis(afnd):
     visitados = set()
 
-    def elimina(regra, estado):        # Utiliza uma dfs para remover recursivamente
+    def elimina(regra, estado):
         if estado in visitados:
             return
         
@@ -219,7 +219,7 @@ def eliminarInalcancaveis(afnd):
     x = len(afnd)
 
     for i in range(x):
-        if i not in visitados:      # Após a dfs estados não visitados são eliminados
+        if i not in visitados:
             del afnd[i]
 
 
@@ -231,7 +231,7 @@ def eliminarInuteis(afnd):
         if '*' in afnd[rg].keys():
             uteis.add(rg)
     
-    def elimina(regra, nRegra):     # Utiliza uma dfs para encontrar os estados inuteis
+    def elimina(regra, nRegra):
         if nRegra in uteis:
             return True
         
@@ -252,10 +252,10 @@ def eliminarInuteis(afnd):
         visitados = set()
     
     for regra in aux:
-        if regra not in uteis:      # Após a dfs estados que não estão em uteis são eliminados
+        if regra not in uteis:
             del afnd[regra]
     
-    for regra in afnd.keys():       # Transições para estados não uteis também são eliminados
+    for regra in afnd.keys():
         aux = list(afnd[regra].keys())
         for chave in aux:
             if chave == '*':
@@ -265,45 +265,47 @@ def eliminarInuteis(afnd):
                 if rg not in uteis:
                     del afnd[regra][chave]
 
+#################################################################
+
 def reconhecerStrings():
-    with open("programa.txt", "r") as programa:  # Abre o arquivo onde contém os tokens a serem reconhecidos
-        linhas = programa.readlines()  # Lê todas as linhas do arquivo
+    with open("programa.txt", "r") as programa:
+        linhas = programa.readlines()
         tokens_por_linha = []
-        for num_linha, linha in enumerate(linhas, start=1):  # Enumera as linhas começando de 1
-            tokens = linha.strip().split()  # Remove espaços em branco e quebra a linha em tokens
-            tokens_por_linha.append((num_linha, tokens))  # Adiciona a lista de tokens com o número da linha
+        for num_linha, linha in enumerate(linhas, start=1):
+            tokens = linha.strip().split()
+            tokens_por_linha.append((num_linha, tokens))
     return tokens_por_linha
 
 def verificarToken(afd, token, tabela_de_simbolos, num_linha):
-    estado = 0  # Inicializa a posição como 0 (que corresponde à estado inicial)
+    estado = 0
 
-    for simbolo in token: # Percorre o token
-        if simbolo not in afd[estado]: # Verifica se o simbolo não está presente no estado atual
-            tabela_de_simbolos.append((num_linha, token, "x")) # Adiciona na tabela de simbolos um erro
+    for simbolo in token:
+        if simbolo not in afd[estado]:
+            tabela_de_simbolos.append((num_linha, token, "x"))
             return
-        estado = afd[estado][simbolo][0]  # Atualiza o estado para o proximo estado a ser verificado 
+        estado = afd[estado][simbolo][0] 
 
-    if '*' in afd[estado]: # Após verificar todos os simbolos, verifica se o estado atual é um estado final
-        tabela_de_simbolos.append((num_linha, token, estado))  # Se o estado atual for final reconheceu o token e adiciona na tabela de simbolos
+    if '*' in afd[estado]:
+        tabela_de_simbolos.append((num_linha, token, estado)) 
         return 
 
-    if 'Îµ' in afd[estado]:  # Após verificar todos os simbolos e o estado atual não for final tenta fazer uma epsilon transição
-        estado = afd[estado]["Îµ"][0] # Realiza a epsilon transição
-        if '*' in afd[estado]: # Após a epsilon transição verifica se o estado atual é final
-            tabela_de_simbolos.append((num_linha, token, estado)) # Se o estado atual for final reconheceu o token e adiciona na tabela de simbolos
+    if 'Îµ' in afd[estado]:
+        estado = afd[estado]["Îµ"][0] 
+        if '*' in afd[estado]:
+            tabela_de_simbolos.append((num_linha, token, estado))
             return
 
-    tabela_de_simbolos.append((num_linha, token, "x")) # Caso o estado não seja final e não possua epsilon transição o token não foi reconhecido e adiciona um erro a tabela de simbolos
+    tabela_de_simbolos.append((num_linha, token, "x"))
 
 
 def fazerAnaliseLexica(afd):
-    tokens_por_linha = reconhecerStrings() # Ler o arquivo a ser analisado
+    tokens_por_linha = reconhecerStrings()
     tabela_de_simbolos = []
-    for num_linha, tokens in tokens_por_linha: # Percorre os token do arquivo e a linha em que ele está
-        for token in tokens: # Para cada token da linha ele verifica se é valido e preenche a tabela de simbolos
+    for num_linha, tokens in tokens_por_linha:
+        for token in tokens:
             verificarToken(afd, token, tabela_de_simbolos, num_linha) 
 
-    fita = gerarFita(tabela_de_simbolos) # Apartir da tabela de simbolos é gerada a fita de saida
+    fita = gerarFita(tabela_de_simbolos)
     imprimirTabelaDeSimbolosEFita(tabela_de_simbolos, fita)
 
 def imprimirTabelaDeSimbolos(tabelaDeSimbolos):
@@ -325,47 +327,3 @@ def imprimirTabelaDeSimbolosEFita(tabela, fita):
         print(item)
 
     print(f"\nFita: {fita}")
-
-
-afd = {}
-alfabeto = []
-gramatica = []
-
-entrada = open("entrada.txt", "r") #abre o arquivo de entrada
-entradaString = entrada.read() #salva em uma string o conteudo do arquivo de entrada
-entradaLista = entradaString.split('\n') #quebra a string em uma lista, usando a quebra de linha como separador
-
-#para separar os tokens da gramática, é usado uma linha vazia, que também serve para identificar duas gramáticas diferentes e o fim do arquivo
-
-listaAuxiliar = entradaLista.copy() #faz uma cópia da lista para podermos trabalhar com ela, removendo cada posição lida
-
-for tokenLido in listaAuxiliar:
-    if not tokenLido: #terminou de ler os tokens
-        entradaLista.remove(tokenLido) #remove da lista de entrada
-        break 
-    gerarAfndToken(afd, tokenLido, alfabeto) #adiciona ao afnd as regras de produção para o token lido
-    entradaLista.remove(tokenLido) #remove da lista de entrada
-    # print(tokenLido) if e else//
-
-listaAuxiliar = entradaLista.copy() #agora na lista de entrada, temos apenas as gramáticas para serem lidas
-
-while entradaLista:
-    for regraGramaticaLida in listaAuxiliar:    
-        if not regraGramaticaLida: #após ler todas as regras da gramática, une as regras da gramática com as dos tokens
-            gerarAfndGramatica(afd, gramatica, alfabeto) 
-            gramatica.clear() 
-            entradaLista.remove(regraGramaticaLida)
-        else:
-            gramatica.append(regraGramaticaLida) 
-            entradaLista.remove(regraGramaticaLida)
-
-eliminarEpsilonTransicoes(afd)
-determinizar(afd)
-print('Automato finito deterministico:')
-exibirAutomatoDeterministico(afd, alfabeto)
-eliminarInalcancaveis(afd)
-print('\n Após eliminar inalcançáveis:')
-exibirAutomatoDeterministico(afd, alfabeto)
-eliminarInuteis(afd)
-print('\n Após eliminar inúteis:')
-exibirAutomatoDeterministico(afd, alfabeto)
