@@ -274,6 +274,7 @@ def reconhecerStrings():
         for num_linha, linha in enumerate(linhas, start=1):
             tokens = linha.strip().split()
             tokens_por_linha.append((num_linha, tokens))
+            # print(tokens_por_linha)
     return tokens_por_linha
 
 def verificarToken(afd, token, tabela_de_simbolos, num_linha):
@@ -315,6 +316,7 @@ def imprimirTabelaDeSimbolos(tabelaDeSimbolos):
 
 def gerarFita(tabelaDeSimbolos):
     fita = [item[2] for item in tabelaDeSimbolos]
+    fita.append("$")
     return fita
 
 def imprimirFita(fita):

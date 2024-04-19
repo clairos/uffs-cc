@@ -1,6 +1,6 @@
 se aeiouuu
 entao a
-senao b
+senao b xy
 
 entao
     c
