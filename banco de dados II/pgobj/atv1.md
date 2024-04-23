@@ -21,14 +21,16 @@ sudo chown -R postgres:postgres /tbs/
 sudo -i -u postgres psql
 ```
 
-#### 1. Cria TABLESPACES
+---
+
+#### 1. Criando TABLESPACES
 
 ```sql
 CREATE TABLESPACE tbs01 LOCATION '/tbs/tbs01';
 CREATE TABLESPACE tbs02 LOCATION '/tbs/tbs02';
 ```
 
-#### 2. Cria USERS
+#### 2. Criando USERS
 
 ```sql
 CREATE USER clara1 PASSWORD 'clara1';
@@ -53,7 +55,7 @@ CREATE DATABASE mydb TABLESPACE tbs01;
 ALTER DATABASE mydb OWNER TO clara1;
 ```
 
-#### 5. Acessando o BD
+#### 5. Acessando o BD como usuário 
 
 ```sql
 \c mydb clara1
@@ -64,10 +66,6 @@ ALTER DATABASE mydb OWNER TO clara1;
 ```sql
 CREATE SCHEMA desenv;
 ```
-
-<!-- ```sql
-GRANT USAGE ON SCHEMA desenv TO clara1;
-``` -->
 
 #### 7. Apontando o esquema como padrão para o banco e para o usuário
 
@@ -103,54 +101,55 @@ CREATE TABLE sale_item (
 
 #### 9. Populando e o BD com os scripts implementados em sala de aula (1000 produtos, 500 cupons e +1000 produtos vendidos)
 
-Criação das procedures:
+Criação das procedures para inserção nas tabelas product, sale e sale_item:
+
 ```sql
-create or replace procedure ins_product(qttup int) Language plpgsql
-as $$
-declare
+CREATE OR REPLACE PROCEDURE ins_product(qttup int) LANGUAGE plpgsql
+AS $$
+DECLARE
    prd_tup product%rowtype;
    counter int:=0;
    stock int[5]:='{3,5,8,10,15}';
-begin
-   raise notice 'Range ids: %',100*qttup;
-   loop
+BEGIN
+   RAISE NOTICE 'Range ids: %',100*qttup;
+   LOOP
       prd_tup.pid:=(random()*100*qttup)::int;
       prd_tup.name:=left(MD5(random()::text),20);
       prd_tup.pqty:=stock[(random()*4)::int+1];
-      raise notice 'product: %',prd_tup;
-      if (not exists (select 1 from product where pid=prd_tup.pid))
-      then
-        insert into product (pid,name,pqty) values (prd_tup.pid,prd_tup.name,prd_tup.pqty);
+      RAISE NOTICE 'product: %',prd_tup;
+      IF (NOT EXISTS (SELECT 1 FROM product WHERE pid=prd_tup.pid))
+      THEN
+        INSERT INTO product (pid,name,pqty) VALUES (prd_tup.pid,prd_tup.name,prd_tup.pqty);
         counter:=counter+1;
-      end if;
-      exit when counter >= qttup;
-   end loop;
-end; $$;
+      END IF;
+      EXIT WHEN counter >= qttup;
+   END LOOP;
+END; $$;
 
 
-create or replace procedure ins_sale(qttup int) Language plpgsql
-as $$
-declare
+CREATE OR REPLACE PROCEDURE ins_sale(qttup int) LANGUAGE plpgsql
+AS $$
+DECLARE
    sale_tup sale%rowtype;
    counter int:=0;
-begin
-   raise notice 'Range ids: %',100*qttup;
-   loop
+BEGIN
+   RAISE NOTICE 'Range ids: %',100*qttup;
+   LOOP
       sale_tup.sid:=(random()*100*qttup)::int;
       sale_tup.sdate:='2023-01-01 00:00:00'::timestamp + random()*(now()-timestamp '2023-01-01 00:00:00');
-      raise notice 'Sale: %',sale_tup;
-      if (not exists (select 1 from sale where sid=sale_tup.sid))
-      then
-        insert into sale (sid,sdate) values (sale_tup.sid,sale_tup.sdate);
+      RAISE NOTICE 'Sale: %',sale_tup;
+      IF (not exists (SELECT 1 FROM sale WHERE sid=sale_tup.sid))
+      THEN
+        INSERT INTO sale (sid,sdate) VALUES (sale_tup.sid,sale_tup.sdate);
         counter:=counter+1;
-      end if;
-      exit when counter >= qttup;
-   end loop;
-end; $$;
+      END IF;
+      EXIT WHEN counter >= qttup;
+   END LOOP;
+END; $$;
 
-create or replace procedure ins_sale_item (qttup int) language plpgsql
-as $$
-declare
+CREATE OR REPLACE PROCEDURE ins_sale_item (qttup int) language plpgsql
+AS $$
+DECLARE
     itBySale int[6]:='{2,4,7,8,9,10}';
     nprod int;
     counter_nprod int := 0;
@@ -160,49 +159,40 @@ declare
     qt_prod int;
     qt_sale int;
     counter int:=0;
-begin
-
-    select array_agg(pid) into array_prod from product;
-    select count(pid) into qt_prod from product;
-
-    select array_agg(sid) into array_sale from sale;
-    select count(sid) into qt_sale from sale;
-
+BEGIN
+    SELECT array_agg(pid) INTO array_prod FROM product;
+    SELECT count(pid) INTO qt_prod FROM product;
+    SELECT array_agg(sid) INTO array_sale FROM sale;
+    SELECT count(sid) INTO qt_sale FROM sale;
     nprod := itBySale[(random()*5+1)::int+1];
-
-    loop
+    LOOP
         sale_item_tup.sid := array_sale[(random()*(qt_sale-1))::int+1];
-
-            loop
+            LOOP
                 sale_item_tup.pid := array_prod[(random()*(qt_prod-1))::int+1];
                 sale_item_tup.sqty := (random()*1000)::int;
                 
-                if (not exists (select 1 from sale_item where sid=sale_item_tup.sid and pid=sale_item_tup.pid))
-                    then
-                    insert into sale_item (sid, pid, sqty) values (sale_item_tup.sid, sale_item_tup.pid, sale_item_tup.sqty);
+                IF (NOT EXISTS (SELECT 1 FROM sale_item WHERE sid=sale_item_tup.sid AND pid=sale_item_tup.pid))
+                    THEN
+                    INSERT INTO sale_item (sid, pid, sqty) VALUES (sale_item_tup.sid, sale_item_tup.pid, sale_item_tup.sqty);
                     counter_nprod := counter_nprod + 1;
-                end if;
-
-                exit when counter_nprod > nprod;
-            end loop;
-
+                END IF;
+                EXIT WHEN counter_nprod > nprod;
+            END LOOP;
             counter := counter +1;
-
-        exit when counter >= qttup;
-    end loop;
-
-end; $$;
+        EXIT WHEN counter >= qttup;
+    END LOOP;
+END; $$;
 ```
 
 Procedure call_all:
 ```sql
-create or replace procedure call_all (qtprod int, qtsale int, qtitem int) language plpgsql
-as $$
-begin
+CREATE OR REPLACE PROCEDURE call_all (qtprod int, qtsale int, qtitem int) LANGUAGE plpgsql
+AS $$
+BEGIN
    call ins_product(qtprod);
    call ins_sale(qtsale);
    call ins_sale_item(qtitem);
-end; $$;
+END; $$;
 ```
 
 Populando o banco:
@@ -211,10 +201,75 @@ CALL call_all(1000, 500, 1100);
 ```
 
 #### 10. Criando uma trigger que armazene em uma tabela de auditoria todas as vezes que a quantidade vendida de um produto for alterada (ou uma venda de produto for excluída)
-> A tabela de auditoria deverá ter a operação, o valor antigo e novo (se for o caso), data e hora da operação e usuário. Esta tabela não tem PK
+> A tabela de auditoria deverá ter a operação, o valor antigo e novo (se for o caso), data e hora da operação e usuário. Esta tabela não tem PK.
 
+```sql
+CREATE OR REPLACE FUNCTION audit_trigger() RETURNS TRIGGER AS $$
+DECLARE
+    operation_text TEXT;
+    old_quantity INTEGER;
+    new_quantity INTEGER;
+BEGIN
+    IF (TG_OP = 'INSERT') THEN
+        operation_text := 'INSERT';
+    ELSIF (TG_OP = 'UPDATE') THEN
+        operation_text := 'UPDATE';
+        old_quantity := OLD.sqty; 
+        new_quantity := NEW.sqty; 
+    ELSIF (TG_OP = 'DELETE') THEN
+        operation_text := 'DELETE';
+    END IF;
 
+    INSERT INTO audit (operation, old_quantity, new_quantity, operation_time, user_name)
+    VALUES (operation_text, old_quantity, new_quantity, current_timestamp, current_user);
+
+    RETURN NULL; 
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON sale_item
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+```
+
+###### Para testar:
+
+1. Inserção de um novo registro na tabela 'sale_item':
+```sql
+INSERT INTO sale_item (sid, pid, sqty) VALUES (1, 1, 10);
+```
+
+2. Atualização da quantidade vendida em um registro existente:
+```sql
+UPDATE sale_item SET sqty = 15 WHERE sid = 1 AND pid = 1;
+```
+
+3. Exclusão de um registro da tabela 'sale_item':
+```sql
+DELETE FROM sale_item WHERE sid = 1 AND pid = 1;
+```
+
+###### Agora só verificar a tabela de auditoria:
+```sql
+SELECT * FROM audit;
+```
 
 #### 11. Criando um índice não único para a data da venda e, neste índice, incluindo o endereço.
 
-#### 12. Para o usuário não dono do BD, dando alguns privilégios: select em product e sale, todos para sale_item.
+```sql
+CREATE INDEX idx_sale_date_address ON sale (sdate, address);
+```
+
+#### 12. Para o usuário não dono do BD, dando alguns privilégios: SELECT em product e sale, todos para sale_item.
+
+```sql
+GRANT SELECT ON TABLE product TO clara2;
+```
+
+```sql
+GRANT SELECT ON TABLE sale TO clara2;
+```
+
+```sql
+GRANT ALL ON TABLE sale_item TO clara2;
+```
