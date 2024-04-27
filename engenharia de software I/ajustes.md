@@ -1,0 +1,23 @@
+- [x] Incluir print dos documentos utilizados para registrar as informações deste processo: registro do animal, acompanhamento, adoção, registro de gastos com veterinário, etc.
+- [x] Substituir: "software de contabilidade" para "software para controle e gestão financeira da ONG".
+- [x] RF03 Controle de gastos:
+  - Faltou descrever os campos.
+  - Relatório é um requisito separado do registro dos gastos.
+- [x] RF04 Gestão de doações:
+  - As doações são apenas em dinheiro? Pode existir doação de ração, etc?
+  - A finalidade do uso da doação precisa ser descrito ao cadastrar a doação?
+  - Para haver um relatório de receitas e despesas, é necessário haver um requisito para registrar receitas e despesas. O relatório seria um novo requisito.
+  - Repensar esse requisito.
+- [x] RF05 Cadastro de animais:
+  - Dividir em 2 requisitos:
+    - Cadastro de animais: apenas os dados referentes ao cadastro do animal.
+    - Manter histórico de saúde do animal: registro dos eventos de vacina, veterinário, etc.
+- [x] RF08 Formulário de adoção:
+  - O formulário de adoção deverá ser realizado dentro do próprio sistema, e gravar numa tabela do banco de dados.
+  - Quais os campos do formulário? (para saber se atendem ou não aos critérios de adoção) Objetivo: centralização dos dados.
+- [x] RF09 Análise do formulário:
+  - "Análise do pedido de adoção".
+- [x] RF10 Assinatura do termo de adoção:
+  - Será online ou é um procedimento ao entregar o animal à pessoa que irá adotar?
+- [ ] Diagrama de casos de uso:
+  - Haverá várias mudanças devido às mudanças nos requisitos. Enviar após alterar os requisitos para eu reavaliar.
