@@ -1,47 +1,85 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <pthread.h>
-#include <semaphore.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <unistd.h>
+    #include <pthread.h>
+    #include <semaphore.h>
 
-#define MAX_USUARIOS 5
+    #define NUMFILO 5
 
-sem_t saleiro_mutex;
-sem_t acesso_saleiro;
+    pthread_t filosofo[NUMFILO];
+    sem_t hashi[NUMFILO];
+    sem_t saleiro;
 
-void inicializar() {
-    sem_init(&saleiro_mutex, 0, 1);
-    sem_init(&acesso_saleiro, 0, MAX_USUARIOS);
-}
+    char *space[] = {"", "\t", "\t\t", "\t\t\t", "\t\t\t\t"};
 
-void destruir() {
-    sem_destroy(&saleiro_mutex);
-    sem_destroy(&acesso_saleiro);
-}
-
-void usar_saleiro(int id_usuario) {
-    sem_wait(&acesso_saleiro);
-    
-    sem_wait(&saleiro_mutex);
-    printf("Usuário %d está usando o saleiro...\n", id_usuario);
-    printf("Usuário %d terminou de usar o saleiro.\n", id_usuario);
-    sem_post(&saleiro_mutex);
-    
-    sem_post(&acesso_saleiro);
-}
-
-int main() {
-    inicializar();
-
-    pthread_t usuarios[MAX_USUARIOS];
-    for (int i = 0; i < MAX_USUARIOS; i++) {
-        pthread_create(&usuarios[i], NULL, (void *)usar_saleiro, (void *)(intptr_t)i);
+    void espera(int n)
+    {
+        sleep(random() % n);
+        usleep(random() % 1000000);
     }
 
-    for (int i = 0; i < MAX_USUARIOS; i++) {
-        pthread_join(usuarios[i], NULL);
+    void come(int f)
+    {
+        printf("%sF%d COMENDO\n", space[f], f);
+        espera(1);
     }
 
-    destruir();
+    void medita(int f)
+    {
+        printf("%sF%d meditando\n", space[f], f);
+        espera(1);
+    }
 
-    return 0;
-}
+    void pega_hashi(int f, int h)
+    {
+        printf("%sF%d quer  h%d\n", space[f], f, h);
+        sem_wait(&hashi[h]);
+        printf("%sF%d pegou h%d\n", space[f], f, h);
+    }
+
+    void larga_hashi(int f, int h)
+    {
+        printf("%sF%d larga h%d\n", space[f], f, h);
+        sem_post(&hashi[h]);
+    }
+
+    void *threadFilosofo(void *arg)
+    {
+        int i = (long int)arg;
+        while (1)
+        {
+            medita(i);
+            sem_wait(&saleiro);
+            pega_hashi(i, i);
+            pega_hashi(i, (i + 1) % NUMFILO);
+            sem_post(&saleiro);
+            come(i);
+            larga_hashi(i, i);
+            larga_hashi(i, (i + 1) % NUMFILO);
+        }
+        pthread_exit(NULL);
+    }
+
+    int main(int argc, char *argv[])
+    {
+        long i, status;
+
+        setvbuf(stdout, 0, _IONBF, 0);
+
+        for (i = 0; i < NUMFILO; i++)
+            sem_init(&hashi[i], 0, 1);
+
+        sem_init(&saleiro, 0, 1);
+
+        for (i = 0; i < NUMFILO; i++)
+        {
+            status = pthread_create(&filosofo[i], NULL, threadFilosofo, (void *)i);
+            if (status)
+            {
+                perror("pthread_create");
+                exit(1);
+            }
+        }
+
+        pthread_exit(NULL);
+    }
