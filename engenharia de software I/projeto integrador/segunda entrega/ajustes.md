@@ -19,5 +19,5 @@
   - "Análise do pedido de adoção".
 - [x] RF10 Assinatura do termo de adoção:
   - Será online ou é um procedimento ao entregar o animal à pessoa que irá adotar?
-- [ ] Diagrama de casos de uso:
+- [x] Diagrama de casos de uso:
   - Haverá várias mudanças devido às mudanças nos requisitos. Enviar após alterar os requisitos para eu reavaliar.
