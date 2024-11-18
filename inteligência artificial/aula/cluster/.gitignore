@@ -1,0 +1,24 @@
+# Ignorar diretórios de ambiente virtual
+venv/
+.env/
+
+# Ignorar arquivos de cache do Python
+__pycache__/
+*.py[cod]
+
+# Ignorar arquivos gerados por testes
+*.pytest_cache/
+.tox/
+.nox/
+
+# Ignorar configurações específicas de IDEs/editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignorar logs e arquivos temporários
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
