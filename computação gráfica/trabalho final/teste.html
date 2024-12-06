@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Rounded Dice</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #resetButton {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #diceMenu {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #resultMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="diceMenu">
+    <label for="diceSelect">Escolha o dado:</label>
+    <select id="diceSelect">
+        <option value="6">Dado de 6 lados</option>
+        <option value="12">Dado de 12 lados</option>
+        <option value="20">Dado de 20 lados</option>
+    </select>
+</div>
+<div id="resetButton">Reiniciar</div>
+<div id="resultMessage"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script>
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Physics setup
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0);
+
+    // Dice geometry with rounded corners
+    const radius = 0.2;
+    const geometry = new THREE.RoundedBoxGeometry(1, 1, 1, 10, radius);
+
+    // Dice material
+    const material = new THREE.MeshStandardMaterial({ color: 0x006400 }); // Dark green
+
+    // Create dice mesh
+    const dice = new THREE.Mesh(geometry, material);
+    scene.add(dice);
+
+    // Create 20-sided dice (icosahedron)
+    const d20Geometry = new THREE.IcosahedronGeometry(1);
+    const d20Material = new THREE.MeshStandardMaterial({ color: 0x8B0000 }); // Dark red
+    const d20 = new THREE.Mesh(d20Geometry, d20Material);
+    scene.add(d20);
+
+    // Create 12-sided dice (dodecahedron)
+    const d12Geometry = new THREE.DodecahedronGeometry(1);
+    const d12Material = new THREE.MeshStandardMaterial({ color: 0x00008B }); // Dark blue
+    const d12 = new THREE.Mesh(d12Geometry, d12Material);
+    scene.add(d12);
+
+    // Dice physics
+    const diceShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
+    const diceBody = new CANNON.Body({ mass: 1 });
+    diceBody.addShape(diceShape);
+    diceBody.position.set(0, 2, 0);
+    world.addBody(diceBody);
+
+    // 20-sided dice physics
+    const d20Shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
+    const d20Body = new CANNON.Body({ mass: 1 });
+    d20Body.addShape(d20Shape);
+    d20Body.position.set(2, 2, 0);
+    world.addBody(d20Body);
+
+    // 12-sided dice physics
+    const d12Shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
+    const d12Body = new CANNON.Body({ mass: 1 });
+    d12Body.addShape(d12Shape);
+    d12Body.position.set(-2, 2, 0);
+    world.addBody(d12Body);
+
+    // Ground physics
+    const groundShape = new CANNON.Plane();
+    const groundBody = new CANNON.Body({ mass: 0 });
+    groundBody.addShape(groundShape);
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(groundBody);
+
+    // Table physics
+    const tableShape = new CANNON.Box(new CANNON.Vec3(5, 0.1, 5));
+    const tableBody = new CANNON.Body({ mass: 0 });
+    tableBody.addShape(tableShape);
+    tableBody.position.set(0, -0.1, 0);
+    world.addBody(tableBody);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    // Camera position
+    camera.position.set(0, 5, 5);
+    camera.lookAt(0, 0, 0);
+
+    let hasStopped = false;
+    let hasLaunched = false;
+
+    function getRandomNumber(sides) {
+        return Math.floor(Math.random() * sides) + 1;
+    }
+
+    function showResultMessage(sides) {
+        const resultMessage = document.getElementById('resultMessage');
+        resultMessage.textContent = `Resultado: ${getRandomNumber(sides)}`;
+        resultMessage.style.display = 'block';
+    }
+
+    function hideResultMessage() {
+        const resultMessage = document.getElementById('resultMessage');
+        resultMessage.style.display = 'none';
+    }
+
+    function checkIfStopped(body) {
+        return body.velocity.lengthSquared() < 0.01 && body.angularVelocity.lengthSquared() < 0.01;
+    }
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        world.step(1 / 60);
+
+        // Sync dice position and rotation with physics
+        dice.position.copy(diceBody.position);
+        dice.quaternion.copy(diceBody.quaternion);
+
+        // Sync 20-sided dice position and rotation with physics
+        d20.position.copy(d20Body.position);
+        d20.quaternion.copy(d20Body.quaternion);
+
+        // Sync 12-sided dice position and rotation with physics
+        d12.position.copy(d12Body.position);
+        d12.quaternion.copy(d12Body.quaternion);
+
+        if (hasLaunched && !hasStopped) {
+            if (dice.visible && checkIfStopped(diceBody)) {
+                showResultMessage(6);
+                hasStopped = true;
+            } else if (d20.visible && checkIfStopped(d20Body)) {
+                showResultMessage(20);
+                hasStopped = true;
+            } else if (d12.visible && checkIfStopped(d12Body)) {
+                showResultMessage(12);
+                hasStopped = true;
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    // Launch the dice with intermediate force and always backwards
+    function launchDice() {
+        const randomX = (Math.random() - 0.5) * 6;
+        const randomY = Math.random() * 6 + 2.5;
+        const randomZ = -Math.random() * 6 - 2.5; // Always backwards
+
+        if (dice.visible) {
+            diceBody.velocity.set(randomX, randomY, randomZ);
+            diceBody.angularVelocity.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+        }
+
+        if (d20.visible) {
+            d20Body.velocity.set(randomX, randomY, randomZ);
+            d20Body.angularVelocity.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+        }
+
+        if (d12.visible) {
+            d12Body.velocity.set(randomX, randomY, randomZ);
+            d12Body.angularVelocity.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+        }
+
+        hasStopped = false;
+        hasLaunched = true;
+    }
+
+    // Reset the dice
+    function resetDice() {
+        diceBody.position.set(0, 2, 0);
+        diceBody.velocity.set(0, 0, 0);
+        diceBody.angularVelocity.set(0, 0, 0);
+
+        d20Body.position.set(2, 2, 0);
+        d20Body.velocity.set(0, 0, 0);
+        d20Body.angularVelocity.set(0, 0, 0);
+
+        d12Body.position.set(-2, 2, 0);
+        d12Body.velocity.set(0, 0, 0);
+        d12Body.angularVelocity.set(0, 0, 0);
+
+        hasStopped = false;
+        hasLaunched = false;
+        hideResultMessage();
+    }
+
+    // Detect click on dice
+    window.addEventListener('click', function(event) {
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObjects([dice, d12, d20]);
+        if (intersects.length > 0) {
+            launchDice();
+        }
+    });
+
+    // Reset the dice on button click
+    document.getElementById('resetButton').addEventListener('click', resetDice);
+
+    // Handle dice selection
+    document.getElementById('diceSelect').addEventListener('change', function(event) {
+        const selectedDice = event.target.value;
+        dice.visible = selectedDice === '6';
+        d12.visible = selectedDice === '12';
+        d20.visible = selectedDice === '20';
+        resetDice(); // Reinicia tudo ao trocar de dado
+    });
+
+    // Initialize visibility
+    dice.visible = true;
+    d12.visible = false;
+    d20.visible = false;
+
+    animate();
+</script>
+</body>
+</html>
