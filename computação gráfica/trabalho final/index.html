@@ -1,263 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dados com Luz e Sombra</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    canvas {
-      display: block;
-    }
-    button, select {
-      position: absolute;
-      top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      margin-right: 10px;
-    }
-    select {
-      background-color: white;
-      color: black;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #resetButton {
-      right: 10px;
-    }
-    #shapeSelector {
-      left: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Rounded Dice</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #resetButton {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #diceMenu {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #resultMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/TextureLoader.js"></script>
 </head>
 <body>
-  <button id="resetButton" style="display: none;">Reiniciar</button>
-  <select id="shapeSelector">
-    <option value="d6">Dado de 6 Lados</option>
-    <option value="d12">Dado de 12 Lados</option>
-    <option value="d20">Dado de 20 Lados</option>
-  </select>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/three-rounded-box@0.1.4/dist/three-rounded-box.min.js"></script> -->
-  <script>
-    // Configuração inicial
+<div id="diceMenu">
+    <label for="diceSelect">Escolha o dado:</label>
+    <select id="diceSelect">
+        <option value="6">Dado de 6 lados</option>
+        <option value="12">Dado de 12 lados</option>
+        <option value="20">Dado de 20 lados</option>
+    </select>
+</div>
+<div id="resetButton">Reiniciar</div>
+<div id="resultMessage"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script>
+    // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true; // Habilitar sombras
     document.body.appendChild(renderer.domElement);
 
-    // Luz ambiente
-    const ambientLight = new THREE.AmbientLight(0x404040, 1.5); // Luz suave para todo o ambiente
-    scene.add(ambientLight);
+    // Physics setup
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0);
 
-    // Luz direcional
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 10, 5);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024; // Qualidade da sombra
-    directionalLight.shadow.mapSize.height = 1024;
-    scene.add(directionalLight);
+    // Load wood texture
+    const textureLoader = new THREE.TextureLoader();
+    const woodTexture = textureLoader.load('madeira.jpg');
 
-    // Adicionar um plano visível para o chão
-    const planeGeometry = new THREE.PlaneGeometry(20, 20);
-    const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.8 });
-    const ground = new THREE.Mesh(planeGeometry, planeMaterial);
-    ground.rotation.x = -Math.PI / 2; // Rotacionar para ficar plano
-    ground.position.y = -1.5; // Ajustar a posição do chão
-    ground.receiveShadow = true; // Permitir sombra no chão
-    scene.add(ground);
+    // Create table mesh
+    const tableGeometry = new THREE.PlaneGeometry(20, 20); // Extend table size
+    const tableMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, side: THREE.DoubleSide }); // Wood texture
+    const table = new THREE.Mesh(tableGeometry, tableMaterial);
+    table.rotation.x = -Math.PI / 2;
+    scene.add(table);
 
-    // Adicionar uma parede no fundo
-    const wallGeometry = new THREE.PlaneGeometry(20, 10);
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.8 });
+    // Create wall mesh
+    const wallGeometry = new THREE.PlaneGeometry(20, 4); // Extend wall size
+    const wallMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, side: THREE.DoubleSide }); // Wood texture
     const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-    wall.position.z = -10; // Posicionar a parede no fundo
-    wall.position.y = 3; // Ajustar a altura da parede
-    wall.receiveShadow = true; // Permitir sombra na parede
+    wall.position.set(0, 2, -5); // Bring wall closer
     scene.add(wall);
 
-    // Variáveis
-    let currentShape = "d6";
-    let geometry = new THREE.BoxGeometry();
-    let materials = [
-      new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.4, metalness: 0.1 }), // Vermelho
-      new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.4, metalness: 0.1 }), // Verde
-      new THREE.MeshStandardMaterial({ color: 0x0000ff, roughness: 0.4, metalness: 0.1 }), // Azul
-      new THREE.MeshStandardMaterial({ color: 0xffff00, roughness: 0.4, metalness: 0.1 }), // Amarelo
-      new THREE.MeshStandardMaterial({ color: 0xff00ff, roughness: 0.4, metalness: 0.1 }), // Magenta
-      new THREE.MeshStandardMaterial({ color: 0x00ffff, roughness: 0.4, metalness: 0.1 })  // Ciano
-    ];
-    let shape = new THREE.Mesh(geometry, materials);
-    shape.castShadow = true; // Permitir que o objeto projete sombras
-    scene.add(shape);
+    // Dice geometry with rounded corners
+    const radius = 0.2;
+    const geometry = new THREE.RoundedBoxGeometry(1, 1, 1, 10, radius);
 
-    let velocity = { x: 0, y: 0, z: 0 };
-    let gravity = -0.01;
-    let isFalling = false;
-    let isRotating = false;
+    // Dice material
+    const glossyMaterial = new THREE.MeshStandardMaterial({ color: 0xF5F5F5, roughness: 0.2, metalness: 0.8 }); // Off white, glossy
+    const matteMaterial = new THREE.MeshStandardMaterial({ color: 0xF5F5F5, roughness: 1.0, metalness: 0.0 }); // Off white, matte
+
+    // Create dice mesh
+    const dice = new THREE.Mesh(geometry, glossyMaterial);
+    scene.add(dice);
+
+    // Create 20-sided dice (icosahedron)
+    const d20Geometry = new THREE.IcosahedronGeometry(1);
+    const d20 = new THREE.Mesh(d20Geometry, glossyMaterial); // Use glossy material
+    scene.add(d20);
+
+    // Create 12-sided dice (dodecahedron)
+    const d12Geometry = new THREE.DodecahedronGeometry(1);
+    const d12 = new THREE.Mesh(d12Geometry, glossyMaterial);
+    scene.add(d12);
+
+    // Dice physics
+    const diceShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
+    const diceBody = new CANNON.Body({ mass: 1 });
+    diceBody.addShape(diceShape);
+    diceBody.position.set(0, 2, 0);
+    world.addBody(diceBody);
+
+    // 20-sided dice physics
+    const d20Shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
+    const d20Body = new CANNON.Body({ mass: 1 });
+    d20Body.addShape(d20Shape);
+    d20Body.position.set(2, 2, 0);
+    world.addBody(d20Body);
+
+    // 12-sided dice physics
+    const d12Shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
+    const d12Body = new CANNON.Body({ mass: 1 });
+    d12Body.addShape(d12Shape);
+    d12Body.position.set(-2, 2, 0);
+    world.addBody(d12Body);
+
+    // Ground physics
+    const groundShape = new CANNON.Plane();
+    const groundBody = new CANNON.Body({ mass: 0 });
+    groundBody.addShape(groundShape);
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(groundBody);
+
+    // Table physics
+    const tableShape = new CANNON.Box(new CANNON.Vec3(10, 0.1, 10)); // Extend table size
+    const tableBody = new CANNON.Body({ mass: 0 });
+    tableBody.addShape(tableShape);
+    tableBody.position.set(0, -0.1, 0);
+    world.addBody(tableBody);
+
+    // Wall physics
+    const wallShape = new CANNON.Box(new CANNON.Vec3(10, 2, 0.1)); // Extend wall size
+    const wallBody = new CANNON.Body({ mass: 0 });
+    wallBody.addShape(wallShape);
+    wallBody.position.set(0, 2, -5); // Bring wall closer
+    world.addBody(wallBody);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    // Camera position
+    camera.position.set(0, 5, 5);
+    camera.lookAt(0, 0, 0);
+
+    let hasStopped = false;
     let hasLaunched = false;
-    const bounceDamping = 0.7; // Aumentar o fator de amortecimento para quicar menos
 
-    const rotationSpeed = { x: 0.05, y: 0.1, z: 0.07 };
+    function getRandomNumber(sides) {
+        return Math.floor(Math.random() * sides) + 1;
+    }
 
-    camera.position.set(0, 2, 5);
+    function showResultMessage(sides) {
+        const resultMessage = document.getElementById('resultMessage');
+        resultMessage.textContent = `Resultado: ${getRandomNumber(sides)}`;
+        resultMessage.style.display = 'block';
+    }
 
-    // Função de animação
+    function hideResultMessage() {
+        const resultMessage = document.getElementById('resultMessage');
+        resultMessage.style.display = 'none';
+    }
+
+    function checkIfStopped(body) {
+        return body.velocity.lengthSquared() < 0.01 && body.angularVelocity.lengthSquared() < 0.01;
+    }
+
+    // Animation loop
     function animate() {
-      requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
+        world.step(1 / 60);
 
-      // Aplicar física se estiver em movimento
-      if (isFalling) {
-        velocity.y += gravity;
-        shape.position.x += velocity.x;
-        shape.position.y += velocity.y;
-        shape.position.z += velocity.z;
+        // Sync dice position and rotation with physics
+        dice.position.copy(diceBody.position);
+        dice.quaternion.copy(diceBody.quaternion);
 
-        // Parar no chão e quicar
-        if (shape.position.y <= ground.position.y + 0.5) { // Ajustar a posição de colisão
-          shape.position.y = ground.position.y + 0.5;
-          velocity.y = -velocity.y * bounceDamping;
+        // Sync 20-sided dice position and rotation with physics
+        d20.position.copy(d20Body.position);
+        d20.quaternion.copy(d20Body.quaternion);
 
-          // Parar se a velocidade for muito baixa e o cubo estiver alinhado
-          if (Math.abs(velocity.y) < 0.01 && isAligned(shape.rotation)) {
-            velocity.y = 0;
-            isFalling = false;
-            isRotating = false;
-            document.getElementById('resetButton').style.display = 'block';
-          }
+        // Sync 12-sided dice position and rotation with physics
+        d12.position.copy(d12Body.position);
+        d12.quaternion.copy(d12Body.quaternion);
+
+        if (hasLaunched && !hasStopped) {
+            if (dice.visible && checkIfStopped(diceBody)) {
+                showResultMessage(6);
+                hasStopped = true;
+            } else if (d20.visible && checkIfStopped(d20Body)) {
+                showResultMessage(20);
+                hasStopped = true;
+            } else if (d12.visible && checkIfStopped(d12Body)) {
+                showResultMessage(12);
+                hasStopped = true;
+            }
         }
 
-        // Colisão com a parede
-        if (shape.position.z <= wall.position.z + 0.5) {
-          shape.position.z = wall.position.z + 0.5;
-          velocity.z = -velocity.z * bounceDamping;
+        renderer.render(scene, camera);
+    }
+
+    // Launch the dice with more force and in a straighter line backwards, with more spin
+    function launchDice() {
+        const randomX = (Math.random() - 0.5) * 8; // Increase force
+        const randomY = Math.random() * 2 + 1; // Lower force upwards
+        const randomZ = -Math.random() * 10 - 5; // Increase force and always backwards
+
+        if (dice.visible) {
+            diceBody.velocity.set(randomX, randomY, randomZ);
+            diceBody.angularVelocity.set(Math.random() * 12, Math.random() * 12, Math.random() * 12); // Increase angular velocity
         }
-      }
 
-      // Aplicar rotação
-      if (isRotating) {
-        shape.rotation.x += rotationSpeed.x;
-        shape.rotation.y += rotationSpeed.y;
-        shape.rotation.z += rotationSpeed.z;
-      }
+        if (d20.visible) {
+            d20Body.velocity.set(randomX, randomY, randomZ);
+            d20Body.angularVelocity.set(Math.random() * 12, Math.random() * 12, Math.random() * 12); // Increase angular velocity
+        }
 
-      renderer.render(scene, camera);
+        if (d12.visible) {
+            d12Body.velocity.set(randomX, randomY, randomZ);
+            d12Body.angularVelocity.set(Math.random() * 12, Math.random() * 12, Math.random() * 12); // Increase angular velocity
+        }
+
+        hasStopped = false;
+        hasLaunched = true;
     }
 
-    // Função para verificar se o cubo está alinhado com o chão
-    function isAligned(rotation) {
-      const tolerance = 0.1; // Tolerância para considerar o cubo alinhado
-      const alignedX = Math.abs(rotation.x % (Math.PI / 2)) < tolerance || Math.abs(rotation.x % (Math.PI / 2) - Math.PI / 2) < tolerance;
-      const alignedY = Math.abs(rotation.y % (Math.PI / 2)) < tolerance || Math.abs(rotation.y % (Math.PI / 2) - Math.PI / 2) < tolerance;
-      const alignedZ = Math.abs(rotation.z % (Math.PI / 2)) < tolerance || Math.abs(rotation.z % (Math.PI / 2) - Math.PI / 2) < tolerance;
-      return alignedX && alignedY && alignedZ;
+    // Reset the dice
+    function resetDice() {
+        diceBody.position.set(0, 2, 0);
+        diceBody.velocity.set(0, 0, 0);
+        diceBody.angularVelocity.set(0, 0, 0);
+
+        d20Body.position.set(2, 2, 0);
+        d20Body.velocity.set(0, 0, 0);
+        d20Body.angularVelocity.set(0, 0, 0);
+
+        d12Body.position.set(-2, 2, 0);
+        d12Body.velocity.set(0, 0, 0);
+        d12Body.angularVelocity.set(0, 0, 0);
+
+        hasStopped = false;
+        hasLaunched = false;
+        hideResultMessage();
     }
 
-    // Função para gerar uma velocidade aleatória para trás
-    function getRandomVelocity() {
-      return {
-        x: (Math.random() - 0.5) * 0.05, // Reduzir a velocidade inicial
-        y: Math.random() * 0.05 + 0.025, // Reduzir a velocidade inicial
-        z: -(Math.random() * 0.05 + 0.025) // Garantir que o componente Z seja negativo e reduzir a velocidade inicial
-      };
-    }
-
-    // Trocar a forma
-    document.getElementById('shapeSelector').addEventListener('change', (event) => {
-      const value = event.target.value;
-
-      // Remover forma atual
-      scene.remove(shape);
-
-      // Criar nova forma
-      switch (value) {
-        case "d6":
-          geometry = new THREE.BoxGeometry();
-          materials = [
-            new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.4, metalness: 0.1 }), // Vermelho
-            new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.4, metalness: 0.1 }), // Verde
-            new THREE.MeshStandardMaterial({ color: 0x0000ff, roughness: 0.4, metalness: 0.1 }), // Azul
-            new THREE.MeshStandardMaterial({ color: 0xffff00, roughness: 0.4, metalness: 0.1 }), // Amarelo
-            new THREE.MeshStandardMaterial({ color: 0xff00ff, roughness: 0.4, metalness: 0.1 }), // Magenta
-            new THREE.MeshStandardMaterial({ color: 0x00ffff, roughness: 0.4, metalness: 0.1 })  // Ciano
-          ];
-          break;
-        case "d12":
-          geometry = new THREE.DodecahedronGeometry();
-          materials = new Array(12).fill().map((_, i) => new THREE.MeshStandardMaterial({ color: getColor(i), roughness: 0.4, metalness: 0.1 }));
-          break;
-        case "d20":
-          geometry = new THREE.IcosahedronGeometry();
-          materials = new Array(20).fill().map((_, i) => new THREE.MeshStandardMaterial({ color: getColor(i), roughness: 0.4, metalness: 0.1 }));
-          break;
-      }
-
-      shape = new THREE.Mesh(geometry, materials);
-      shape.castShadow = true;
-      scene.add(shape);
-
-      // Resetar variáveis
-      shape.position.set(0, 0, 0);
-      shape.rotation.set(0, 0, 0);
-      hasLaunched = false;
-      document.getElementById('resetButton').style.display = 'none';
-    });
-
-    // Função para obter uma cor com base no índice
-    function getColor(index) {
-      const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00]; // Vermelho, Verde, Azul, Amarelo
-      return colors[index % colors.length];
-    }
-
-    // Evento de clique
-    window.addEventListener('click', (event) => {
-      if (!hasLaunched) {
-        const raycaster = new THREE.Raycaster();
+    // Detect click on dice
+    window.addEventListener('click', function(event) {
         const mouse = new THREE.Vector2();
-
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
+        const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObject(shape);
 
+        const intersects = raycaster.intersectObjects([dice, d12, d20]);
         if (intersects.length > 0) {
-          velocity = getRandomVelocity(); // Usar velocidade aleatória para trás
-          isFalling = true;
-          isRotating = true;
-          hasLaunched = true;
+            launchDice();
         }
-      }
     });
 
-    // Reinício do jogo
-    document.getElementById('resetButton').addEventListener('click', () => {
-      shape.position.set(0, 0, 0);
-      shape.rotation.set(0, 0, 0);
-      velocity = { x: 0, y: 0, z: 0 };
-      isFalling = false;
-      isRotating = false;
-      hasLaunched = false;
+    // Reset the dice on button click
+    document.getElementById('resetButton').addEventListener('click', resetDice);
 
-      document.getElementById('resetButton').style.display = 'none';
+    // Handle dice selection
+    document.getElementById('diceSelect').addEventListener('change', function(event) {
+        const selectedDice = event.target.value;
+        dice.visible = selectedDice === '6';
+        d12.visible = selectedDice === '12';
+        d20.visible = selectedDice === '20';
+        resetDice(); // Reinicia tudo ao trocar de dado
     });
+
+    // Initialize visibility
+    dice.visible = true;
+    d12.visible = false;
+    d20.visible = false;
 
     animate();
-  </script>
+</script>
 </body>
 </html>
