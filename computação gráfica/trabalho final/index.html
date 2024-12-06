@@ -36,10 +36,6 @@
             display: none;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/TextureLoader.js"></script>
 </head>
 <body>
 <div id="diceMenu">
@@ -55,56 +51,49 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
     // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    // Adicionar fundo HDR
+    const rgbeLoader = new THREE.RGBELoader();
+    rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/photo_studio_loft_hall_4k.hdr', function(texture) {
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        scene.background = texture;
+        scene.environment = texture;
+    });
 
     // Physics setup
     const world = new CANNON.World();
     world.gravity.set(0, -9.82, 0);
-
-    // Load wood texture
-    const textureLoader = new THREE.TextureLoader();
-    const woodTexture = textureLoader.load('madeira.jpg');
-
-    // Create table mesh
-    const tableGeometry = new THREE.PlaneGeometry(20, 20); // Extend table size
-    const tableMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, side: THREE.DoubleSide }); // Wood texture
-    const table = new THREE.Mesh(tableGeometry, tableMaterial);
-    table.rotation.x = -Math.PI / 2;
-    scene.add(table);
-
-    // Create wall mesh
-    const wallGeometry = new THREE.PlaneGeometry(20, 4); // Extend wall size
-    const wallMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, side: THREE.DoubleSide }); // Wood texture
-    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-    wall.position.set(0, 2, -5); // Bring wall closer
-    scene.add(wall);
 
     // Dice geometry with rounded corners
     const radius = 0.2;
     const geometry = new THREE.RoundedBoxGeometry(1, 1, 1, 10, radius);
 
     // Dice material
-    const glossyMaterial = new THREE.MeshStandardMaterial({ color: 0xF5F5F5, roughness: 0.2, metalness: 0.8 }); // Off white, glossy
-    const matteMaterial = new THREE.MeshStandardMaterial({ color: 0xF5F5F5, roughness: 1.0, metalness: 0.0 }); // Off white, matte
+    const material = new THREE.MeshStandardMaterial({ color: 0x006400, metalness: 0.5, roughness: 0.5 }); // Dark green
 
     // Create dice mesh
-    const dice = new THREE.Mesh(geometry, glossyMaterial);
+    const dice = new THREE.Mesh(geometry, material);
     scene.add(dice);
 
     // Create 20-sided dice (icosahedron)
     const d20Geometry = new THREE.IcosahedronGeometry(1);
-    const d20 = new THREE.Mesh(d20Geometry, glossyMaterial); // Use glossy material
+    const d20Material = new THREE.MeshStandardMaterial({ color: 0x8B0000, metalness: 0.5, roughness: 0.5 }); // Dark red
+    const d20 = new THREE.Mesh(d20Geometry, d20Material);
     scene.add(d20);
 
     // Create 12-sided dice (dodecahedron)
     const d12Geometry = new THREE.DodecahedronGeometry(1);
-    const d12 = new THREE.Mesh(d12Geometry, glossyMaterial);
+    const d12Material = new THREE.MeshStandardMaterial({ color: 0x00008B, metalness: 0.5, roughness: 0.5 }); // Dark blue
+    const d12 = new THREE.Mesh(d12Geometry, d12Material);
     scene.add(d12);
 
     // Dice physics
@@ -136,18 +125,60 @@
     world.addBody(groundBody);
 
     // Table physics
-    const tableShape = new CANNON.Box(new CANNON.Vec3(10, 0.1, 10)); // Extend table size
+    const tableShape = new CANNON.Box(new CANNON.Vec3(5, 0.1, 5));
     const tableBody = new CANNON.Body({ mass: 0 });
     tableBody.addShape(tableShape);
     tableBody.position.set(0, -0.1, 0);
     world.addBody(tableBody);
 
-    // Wall physics
-    const wallShape = new CANNON.Box(new CANNON.Vec3(10, 2, 0.1)); // Extend wall size
-    const wallBody = new CANNON.Body({ mass: 0 });
-    wallBody.addShape(wallShape);
-    wallBody.position.set(0, 2, -5); // Bring wall closer
-    world.addBody(wallBody);
+    // Load wood texture for the ground
+    const textureLoader = new THREE.TextureLoader();
+    const woodTexture = textureLoader.load('madeira.jpg');
+    woodTexture.wrapS = THREE.ClampToEdgeWrapping;
+    woodTexture.wrapT = THREE.ClampToEdgeWrapping;
+    woodTexture.repeat.set(1, 1);
+
+    // Ground material with wood texture
+    const groundMaterial = new THREE.MeshStandardMaterial({ map: woodTexture });
+
+    // Create ground mesh
+    const groundGeometry = new THREE.PlaneGeometry(20, 20); // Aumentar o tamanho do chão
+    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+    groundMesh.rotation.x = -Math.PI / 2;
+    scene.add(groundMesh);
+
+    // Create invisible walls
+    const wallMaterial = new CANNON.Material();
+    const wallSize = 10;
+    const wallThickness = 0.1;
+
+    // Left wall
+    const leftWallShape = new CANNON.Box(new CANNON.Vec3(wallThickness, wallSize, wallSize));
+    const leftWallBody = new CANNON.Body({ mass: 0, material: wallMaterial });
+    leftWallBody.addShape(leftWallShape);
+    leftWallBody.position.set(-wallSize, wallSize, 0);
+    world.addBody(leftWallBody);
+
+    // Right wall
+    const rightWallShape = new CANNON.Box(new CANNON.Vec3(wallThickness, wallSize, wallSize));
+    const rightWallBody = new CANNON.Body({ mass: 0, material: wallMaterial });
+    rightWallBody.addShape(rightWallShape);
+    rightWallBody.position.set(wallSize, wallSize, 0);
+    world.addBody(rightWallBody);
+
+    // Front wall
+    const frontWallShape = new CANNON.Box(new CANNON.Vec3(wallSize, wallSize, wallThickness));
+    const frontWallBody = new CANNON.Body({ mass: 0, material: wallMaterial });
+    frontWallBody.addShape(frontWallShape);
+    frontWallBody.position.set(0, wallSize, wallSize);
+    world.addBody(frontWallBody);
+
+    // Back wall
+    const backWallShape = new CANNON.Box(new CANNON.Vec3(wallSize, wallSize, wallThickness));
+    const backWallBody = new CANNON.Body({ mass: 0, material: wallMaterial });
+    backWallBody.addShape(backWallShape);
+    backWallBody.position.set(0, wallSize, -wallSize);
+    world.addBody(backWallBody);
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0x404040);
@@ -158,8 +189,10 @@
     scene.add(pointLight);
 
     // Camera position
-    camera.position.set(0, 5, 5);
+    camera.position.set(0, 5, 10);
     camera.lookAt(0, 0, 0);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
     let hasStopped = false;
     let hasLaunched = false;
@@ -213,28 +246,29 @@
             }
         }
 
+        controls.update(); // Update controls
         renderer.render(scene, camera);
     }
 
-    // Launch the dice with more force and in a straighter line backwards, with more spin
+    // Launch the dice with intermediate force and always backwards
     function launchDice() {
-        const randomX = (Math.random() - 0.5) * 8; // Increase force
-        const randomY = Math.random() * 2 + 1; // Lower force upwards
-        const randomZ = -Math.random() * 10 - 5; // Increase force and always backwards
+        const randomX = (Math.random() - 0.5) * 6;
+        const randomY = Math.random() * 6 + 2.5;
+        const randomZ = -Math.random() * 6 - 2.5; // Always backwards
 
         if (dice.visible) {
             diceBody.velocity.set(randomX, randomY, randomZ);
-            diceBody.angularVelocity.set(Math.random() * 12, Math.random() * 12, Math.random() * 12); // Increase angular velocity
+            diceBody.angularVelocity.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
         }
 
         if (d20.visible) {
             d20Body.velocity.set(randomX, randomY, randomZ);
-            d20Body.angularVelocity.set(Math.random() * 12, Math.random() * 12, Math.random() * 12); // Increase angular velocity
+            d20Body.angularVelocity.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
         }
 
         if (d12.visible) {
             d12Body.velocity.set(randomX, randomY, randomZ);
-            d12Body.angularVelocity.set(Math.random() * 12, Math.random() * 12, Math.random() * 12); // Increase angular velocity
+            d12Body.angularVelocity.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
         }
 
         hasStopped = false;
@@ -293,6 +327,13 @@
     d20.visible = false;
 
     animate();
+
+    // Ajustar renderização ao redimensionar a janela
+    window.addEventListener('resize', function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 </script>
 </body>
 </html>
