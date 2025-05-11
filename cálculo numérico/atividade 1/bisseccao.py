@@ -28,7 +28,7 @@ funcao = funcao.replace('^', '**').replace('ln', 'log')
 
 a = float(input("Digite o valor de a: "))
 b = float(input("Digite o valor de b: "))
-precisao = float(input("Digite a precisão ε (ex.: 0.0001): "))
+precisao = float(input("Digite a precisão ε: "))
 
 math_funcs = {q: getattr(math, q) for q in dir(math) if not q.startswith("__")}
 

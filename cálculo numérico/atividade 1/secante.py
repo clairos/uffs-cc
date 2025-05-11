@@ -1,11 +1,11 @@
 import math 
 
-def secante(f, x0, x1, precisao1, precisao2):
-    if abs(f(x0)) < precisao1:
+def secante(f, x0, x1, precisao):
+    if abs(f(x0)) < precisao:
         alpha = x0
         return alpha
     
-    if abs(f(x1)) < precisao1 or abs(x1-x0) < precisao2:
+    if abs(f(x1)) < precisao or abs(x1-x0) < precisao:
         alpha = x1
         return alpha
     
@@ -18,7 +18,7 @@ def secante(f, x0, x1, precisao1, precisao2):
         eq = (f(x1) / ((f(x1) - f(x0)))) * (x1 - x0)
         x2 = x1 - eq
 
-        if abs(f(x2)) < precisao1 or abs(x2 - x1) < precisao2:
+        if abs(f(x2)) < precisao or abs(x2 - x1) < precisao:
             alpha = x2
             return alpha
         
@@ -34,8 +34,7 @@ funcao = funcao.replace('^', '**').replace('ln', 'log')
 
 x0 = float(input("Digite o valor inicial x0: "))
 x1 = float(input("Digite o valor inicial x1: "))
-precisao1 = float(input("Digite a precisão ε1: "))
-precisao2 = float(input("Digite a precisão ε2: "))
+precisao = float(input("Digite a precisão ε: "))
 
 math_funcs = {q: getattr(math, q) for q in dir(math) if not q.startswith("__")}
 
@@ -43,7 +42,7 @@ def f(x):
     return eval(funcao, {**math_funcs, "x": x})
 
 try:
-    raiz = secante(f, x0, x1, precisao1, precisao2)
+    raiz = secante(f, x0, x1, precisao)
     if raiz is not None:
         print(f"Raiz aproximada: {raiz:.6f}")
 except Exception as e:
