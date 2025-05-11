@@ -1,48 +1,56 @@
-import math 
+import math
 import sympy as sp
+import csv
 
-def newton(f, x0, precisao):
-    f = f.replace('^', '**').replace('ln', 'log')
+def salvar_resultado_csv(nome_arquivo, metodo, dados_iniciais, x_aprox, fx_aprox, erro, iteracoes):
+    arquivo_existe = False
+    try:
+        with open(nome_arquivo, mode='r', encoding='utf-8') as arquivo:
+            arquivo_existe = True
+    except FileNotFoundError:
+        pass
+
+    with open(nome_arquivo, mode='a', newline='', encoding='utf-8') as arquivo:
+        writer = csv.writer(arquivo)
+        if not arquivo_existe:
+            writer.writerow(["Método", "Dados iniciais", "x aproximado", "f(x) aproximado", "Erro em x", "Nº de iterações"])
+        writer.writerow([metodo, dados_iniciais, f"{x_aprox:.8f}", f"{fx_aprox:.8e}", f"{erro:.8e}", iteracoes])
+
+def newton(f_str, x0, precisao):
+    f_str = f_str.replace('^', '**')
     x = sp.symbols('x')
-    f_func = sp.sympify(f)
-    f_derivada = sp.diff(f_func, x)
+    f_expr = sp.sympify(f_str, locals={'e': sp.E})
+    f_derivada = sp.diff(f_expr, x)
+    f_lamb = sp.lambdify(x, f_expr, modules=["sympy"])
+    f_deriv_lamb = sp.lambdify(x, f_derivada, modules=["sympy"])
 
-    f_func = sp.sympify(f, locals={"e": sp.E})
-    f_derivada = sp.diff(f_func, x)
-
-    f = sp.lambdify(x, f_func, modules=['math'])
-    f_derivada = sp.lambdify(x, f_derivada, modules=['math'])
-
-    if abs(f(x0)) < precisao:
+    if abs(f_lamb(x0)) < precisao:
         alpha = x0
-        return alpha
-    
-    k = 1
+        return alpha, f_lamb(alpha), 0.0, 0
 
+    k = 1
     while True:
-        x1 = x0 - (f(x0) / f_derivada(x0))
+        fx = f_lamb(x0)
+        dfx = f_deriv_lamb(x0)
+        if dfx == 0:
+            raise ValueError("Derivada zero. Método de Newton falhou.")
         
-        if abs(f(x1)) < precisao or abs((x1 - x0)) < precisao:
-            alpha = x1
-            return alpha
-        
+        x1 = x0 - fx / dfx
+
+        if abs(f_lamb(x1)) < precisao or abs(x1 - x0) < precisao:
+            return x1, f_lamb(x1), abs(x1 - x0), k
+
         x0 = x1
         k += 1
-    
-    return None
 
 funcao = input("Digite a função f(x): ")
 x0 = float(input("Digite o valor inicial x0: "))
 precisao = float(input("Digite a precisão ε: "))
 
-math_funcs = {q: getattr(math, q) for q in dir(math) if not q.startswith("__")}
-
-def f(x):
-    return eval(funcao, {**math_funcs, "x": x, "e": math.e})
-
 try:
-    raiz = newton(funcao, x0, precisao)
-    if raiz is not None:
-        print(f"Raiz aproximada: {raiz:.6f}")
+    raiz, fx_aprox, erro, iteracoes = newton(funcao, x0, precisao)
+    print(f"Raiz aproximada: {raiz:.8f}")
+    dados_iniciais = f"x0={x0}, ε={precisao}"
+    salvar_resultado_csv("metodos.csv", "Newton", dados_iniciais, raiz, fx_aprox, erro, iteracoes)
 except Exception as e:
     print(f"Erro: {e}")
