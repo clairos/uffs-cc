@@ -1,20 +1,28 @@
 import math
 import sympy as sp
-import csv
+import pandas as pd
+import os
 
-def salvar_resultado_csv(nome_arquivo, metodo, dados_iniciais, x_aprox, fx_aprox, erro, iteracoes):
-    arquivo_existe = False
-    try:
-        with open(nome_arquivo, mode='r', encoding='utf-8') as arquivo:
-            arquivo_existe = True
-    except FileNotFoundError:
-        pass
+def salvar_resultado_excel(nome_arquivo, metodo, dados_iniciais, x_aprox, fx_aprox, erro, iteracoes):
+    dados = {
+        "Método": [metodo],
+        "Dados iniciais": [dados_iniciais],
+        "x aproximado": [round(x_aprox, 8)],
+        "f(x) aproximado": [f"{fx_aprox:.8e}"],
+        "Erro em x": [f"{erro:.8e}"],
+        "Nº de iterações": [iteracoes]
+    }
 
-    with open(nome_arquivo, mode='a', newline='', encoding='utf-8') as arquivo:
-        writer = csv.writer(arquivo)
-        if not arquivo_existe:
-            writer.writerow(["Método", "Dados iniciais", "x aproximado", "f(x) aproximado", "Erro em x", "Nº de iterações"])
-        writer.writerow([metodo, dados_iniciais, f"{x_aprox:.8f}", f"{fx_aprox:.8e}", f"{erro:.8e}", iteracoes])
+    df_novo = pd.DataFrame(dados)
+
+    if os.path.exists(nome_arquivo):
+        df_existente = pd.read_excel(nome_arquivo)
+        df_total = pd.concat([df_existente, df_novo], ignore_index=True)
+    else:
+        df_total = df_novo
+
+    with pd.ExcelWriter(nome_arquivo, engine='openpyxl', mode='w') as writer:
+        df_total.to_excel(writer, index=False)
 
 def newton(f_str, x0, precisao):
     f_str = f_str.replace('^', '**')
@@ -51,6 +59,6 @@ try:
     raiz, fx_aprox, erro, iteracoes = newton(funcao, x0, precisao)
     print(f"Raiz aproximada: {raiz:.8f}")
     dados_iniciais = f"x0={x0}, ε={precisao}"
-    salvar_resultado_csv("metodos.csv", "Newton", dados_iniciais, raiz, fx_aprox, erro, iteracoes)
+    salvar_resultado_excel("metodos.xlsx", "Newton", dados_iniciais, raiz, fx_aprox, erro, iteracoes)
 except Exception as e:
     print(f"Erro: {e}")
