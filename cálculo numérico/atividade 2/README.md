@@ -4,7 +4,7 @@
 
 ## Como funciona
 
-Ao rodar o arquivo `lag_gregnew.py`, será pedido ao usuário a quantidade de pontos, os valores dos pontos em pares `(x, y)` e o valor de `z` para o ponto de interpolação.
+Ao rodar o arquivo `interpolacao.py`, será pedido ao usuário a quantidade de pontos, os valores dos pontos em pares `(x, y)` e o valor de `z` para o ponto de interpolação.
 
 O programa irá calcular os dois métodos de interpolação para os dados inseridos.
 
@@ -17,7 +17,7 @@ Logo sem seguida, será exibido os resultados de ambos os métodos na tela, e os
 Rodar o arquivo com o seguinte comando:
 
 ```
-python lag_gregnew.py
+python interpolacao.py
 ```
 
 > É necessário ter instalado a versão 3.8 ou mais recente do Python
